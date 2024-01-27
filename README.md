@@ -1,3 +1,7 @@
+# world's-word
+
+Este proyecto es una aplicación simple desarrollada en VueJS (tailwindcss, typescript, pinia, vue-router) que reta a los jugadores a adivinar palabras ocultas.
+
 # Vue 3 + TypeScript + Vite
 
 This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
