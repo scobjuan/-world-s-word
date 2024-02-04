@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onBeforeMount } from 'vue';
 import InputWord from '../components/input-word.vue';
 import TableComponent from '../components/table-component.vue';
 import BtnCleanWord from '../components/btn-clean-word.vue';
@@ -12,22 +12,29 @@ const currentRow = ref(1)
 
 const currentWord = ref('')
 
-const destinityWord = 'palabra'
 // const quantityLetters = destinityWord.length
 const lettersAndQuantity: ILettersAndQuantities = {}
+let copyLettersAndQuantity: ILettersAndQuantities = {}
 
 const store = useInitGame()
 const quantityLetters = store.quantityOfLettersSelected
+const destinityWord = ref('')
 
 const onChangedCurrentWord = (val: string) => {
 	console.log(val)
 	currentWord.value = val
 }
 
+onBeforeMount(async () => {
+	await useInitGame().getWord()
+
+	destinityWord.value = store.wordToGuess
+})
+
 const addNewWord = () => {
-	console.log('Hi ', currentWord.value)
+	if (!quantityLetters) return
 	const quantityLettersOfCurrentWord = currentWord.value.length
-	if (quantityLettersOfCurrentWord === 0 || quantityLettersOfCurrentWord < quantityLetters || quantityLettersOfCurrentWord > quantitySelected) return false
+	if (quantityLettersOfCurrentWord === 0 || quantityLettersOfCurrentWord < quantityLetters || quantityLettersOfCurrentWord > quantityLetters) return false
 
 	const allInputs: NodeListOf<HTMLInputElement> = document.querySelectorAll('.input-word-validate')
 	const currentWordToArray = currentWord.value.split('')
@@ -36,7 +43,7 @@ const addNewWord = () => {
 		if (currentRow.value === 1) {
 			allInputs[i].value = currentWordToArray[i].toUpperCase()
 		} else {
-			const position = (currentRow.value * quantitySelected) - (quantitySelected - i)
+			const position = (currentRow.value * quantityLetters) - (quantityLetters - i)
 			if (!allInputs[position]) return
 			allInputs[position].value = currentWordToArray[i].toUpperCase()
 		}
@@ -62,13 +69,15 @@ const goToNextRow = () => {
 	currentRow.value++
 	const allInputs = document.querySelectorAll('.input-word-validate')
 
-	const nextRow = (currentRow.value * quantitySelected) + 1
+	if (!quantityLetters) return
+
+	const nextRow = (currentRow.value * quantityLetters) + 1
 
 	allInputs[nextRow]
 }
 
 const validateWord = () => {
-	if (currentWord.value === destinityWord) {
+	if (currentWord.value === destinityWord.value) {
 		return true
 	}
 
@@ -77,7 +86,7 @@ const validateWord = () => {
 
 const validateLetterPerLetter = (column: number) => {
 	const arrayOfLettersCurrentWord = currentWord.value.split('')
-	const arrayOfLettersDestinityWord = destinityWord.split('')
+	const arrayOfLettersDestinityWord = destinityWord.value.split('')
 
 	const positionsWithCorrectLetter: Array<number> = []
 
@@ -85,10 +94,12 @@ const validateLetterPerLetter = (column: number) => {
 		if (arrayOfLettersDestinityWord.includes(letter) && !lettersAndQuantity.hasOwnProperty(letter)) lettersAndQuantity[letter] = arrayOfLettersDestinityWord.filter(value => value === letter).length
 	})
 
+	copyLettersAndQuantity = {...lettersAndQuantity}
+
 	arrayOfLettersCurrentWord.forEach((letter: string, index: number) => {
 		if (letter === arrayOfLettersDestinityWord[index]) {
 			positionsWithCorrectLetter.push(index)
-			lettersAndQuantity[letter] = lettersAndQuantity[letter] - 1
+			copyLettersAndQuantity[letter]--
 		}
 	})
 
@@ -101,30 +112,32 @@ const validateLetterPerLetter = (column: number) => {
 	for (let i = 0; i < quantityOfCorrectLetters; i++) {
 		let position = positionsWithCorrectLetter[i]
 
-		if (column >= 2) position = (column * quantitySelected) - (quantitySelected - positionsWithCorrectLetter[i])
+		if (!quantityLetters) return
+
+		if (column >= 2) position = (column * quantityLetters) - (quantityLetters - positionsWithCorrectLetter[i])
 
 		allInputs[position].style.backgroundColor = 'green'
 	}
 }
 
 const orangeColor = (column: number) => {
-	const arrayOfLettersDestinityWord = destinityWord.split('')
+	const allInputs = document.querySelectorAll('input')
+	
+	const arrayOfLettersDestinityWord = destinityWord.value.split('')
 	const arrayOfLettersCurrentWord = currentWord.value.split('')
 
 	const mismatchedLettersPositions: Array<number> = []
 
-
-	console.log(lettersAndQuantity['a'])
-
 	arrayOfLettersCurrentWord.forEach((letter: string, index: number) => {
-		if (arrayOfLettersDestinityWord.includes(letter) && lettersAndQuantity[letter] > 0) {
-			lettersAndQuantity[letter] = lettersAndQuantity[letter] - 1
+		if (arrayOfLettersDestinityWord.includes(letter) && lettersAndQuantity[letter] > 0 && allInputs[index].style.backgroundColor !== 'green') {
+			copyLettersAndQuantity[letter]--
 			mismatchedLettersPositions.push(index)
 		}
+
+		console.log(mismatchedLettersPositions)
 	})
 
 
-	const allInputs = document.querySelectorAll('input')
 	const quantityOfMismatchedWords = mismatchedLettersPositions.length
 
 	if (quantityOfMismatchedWords === 0) return
@@ -132,7 +145,9 @@ const orangeColor = (column: number) => {
 	for (let i = 0; i < quantityOfMismatchedWords; i++) {
 		let position = mismatchedLettersPositions[i]
 
-		if (column >= 2) position = (column * quantitySelected) - (quantitySelected - mismatchedLettersPositions[i])
+		if (!quantityLetters) return
+
+		if (column >= 2) position = (column * quantityLetters) - (quantityLetters - mismatchedLettersPositions[i])
 
 		if (allInputs[position].style.backgroundColor === 'green') return
 		allInputs[position].style.backgroundColor = 'orange'
@@ -170,7 +185,7 @@ const orangeColor = (column: number) => {
 	background-color: #000;
 	display: grid;
 	place-content: center;
-	color: rgba(255, 255, 255, 0.8quantitySelected);
+	color: rgba(255, 255, 255, 0.8quantityLetters);
 }
 
 h2 {
