@@ -7,12 +7,12 @@ import BtnAddWord from '../components/btn-add-word.vue';
 import ILettersAndQuantities from '../src/interfaces/lettersAndQuantities'
 
 import { useInitGame } from '../store/initGame';
+import router from '../router';
 
 const currentRow = ref(1)
 
 const currentWord = ref('')
 
-// const quantityLetters = destinityWord.length
 const lettersAndQuantity: ILettersAndQuantities = {}
 let copyLettersAndQuantity: ILettersAndQuantities = {}
 
@@ -21,15 +21,22 @@ const quantityLetters = store.quantityOfLettersSelected
 const destinityWord = ref('')
 
 const onChangedCurrentWord = (val: string) => {
-	console.log(val)
 	currentWord.value = val
 }
 
 onBeforeMount(async () => {
+	if (!store.quantityOfLettersSelected) return router.push({ name: 'home' })
+
 	await useInitGame().getWord()
 
 	destinityWord.value = store.wordToGuess
 })
+
+const goToHome = () => {
+	store.quantityOfLettersSelected = 0
+	store.wordToGuess = ''
+  router.push({ name: 'home' })
+}
 
 const addNewWord = () => {
 	if (!quantityLetters) return
@@ -54,8 +61,8 @@ const addNewWord = () => {
 	orangeColor(currentRow.value)
 	currentWord.value = ''
 
-	if (isCorrectTheWord) alert('Felicidades!, Haz encontrado la palabra del día')
-	else if (currentRow.value === 5) alert('Juego terminado. No has encontrado la palabra del día')
+	if (isCorrectTheWord) router.push({ name: 'correct-word' })
+	else if (currentRow.value === 5) router.push({ name: 'not-guessed-word' })
 
 	goToNextRow()
 	return true
@@ -97,7 +104,7 @@ const validateLetterPerLetter = (column: number) => {
 	copyLettersAndQuantity = {...lettersAndQuantity}
 
 	arrayOfLettersCurrentWord.forEach((letter: string, index: number) => {
-		if (letter === arrayOfLettersDestinityWord[index]) {
+		if (letter === arrayOfLettersDestinityWord[index] && copyLettersAndQuantity[letter] > 0) {
 			positionsWithCorrectLetter.push(index)
 			copyLettersAndQuantity[letter]--
 		}
@@ -121,6 +128,7 @@ const validateLetterPerLetter = (column: number) => {
 }
 
 const orangeColor = (column: number) => {
+	if (Object.entries(copyLettersAndQuantity).length === 0) copyLettersAndQuantity = {...lettersAndQuantity}
 	const allInputs = document.querySelectorAll('input')
 	
 	const arrayOfLettersDestinityWord = destinityWord.value.split('')
@@ -129,12 +137,11 @@ const orangeColor = (column: number) => {
 	const mismatchedLettersPositions: Array<number> = []
 
 	arrayOfLettersCurrentWord.forEach((letter: string, index: number) => {
-		if (arrayOfLettersDestinityWord.includes(letter) && lettersAndQuantity[letter] > 0 && allInputs[index].style.backgroundColor !== 'green') {
+		console.log(letter)
+		if (arrayOfLettersDestinityWord.includes(letter) && copyLettersAndQuantity[letter] > 0) {
 			copyLettersAndQuantity[letter]--
 			mismatchedLettersPositions.push(index)
 		}
-
-		console.log(mismatchedLettersPositions)
 	})
 
 
@@ -163,6 +170,12 @@ const orangeColor = (column: number) => {
 			Of The
 			<span class="type_gradient-one">World!</span>
 		</h2> -->
+
+		<div class="absolute m-10 hover:cursor-pointer" @click="goToHome()">
+			<svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 8 14">
+				<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 1 1.3 6.326a.91.91 0 0 0 0 1.348L7 13"/>
+			</svg>
+		</div>
 
 		<TableComponent :quantityLetters="quantityLetters" />
 

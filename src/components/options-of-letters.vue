@@ -17,10 +17,6 @@ const props = defineProps({
 	'quantityLetter': Number
 })
 
-onMounted(() => {
-	console.log(props.quantityLetter)
-})
-
 const goToWordGuess = (event: MouseEvent) => {
   const allInputs = document.querySelectorAll('.option--btn')
 
