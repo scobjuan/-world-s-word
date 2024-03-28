@@ -1,8 +1,8 @@
 <template>
   <div>
     <input id="new-word" :value="insideValue" type="text" placeholder="Ingrese una palabra"
-      class="bg-transparent mt-10 py-2 border border-[#ffffff17] rounded-md focus:outline-none text-white font-bold text-center w-full"
-      @focus="cleanPlaceholder" @blur="putPlaceholder" @input="event => onChangedCurrentWord(event)">
+      class="relative bg-transparent mt-10 py-2 border rounded-md focus:outline-none text-white font-bold text-center w-full"
+      @focus="cleanPlaceholder" @blur="putPlaceholder" @input="event => onChangedCurrentWord(event)" maxlength="6">
   </div>
 </template>
 
@@ -44,3 +44,9 @@ const putPlaceholder = () => {
   input.placeholder = 'Ingrese una palabra'
 }
 </script>
+
+<style>
+#new-word {
+	border-color: rgba(255, 255, 255, 0.2);
+}
+</style>

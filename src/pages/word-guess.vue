@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, onBeforeMount } from 'vue';
+import { ref, onBeforeMount, computed, Ref } from 'vue';
 import InputWord from '../components/input-word.vue';
 import TableComponent from '../components/table-component.vue';
 import BtnCleanWord from '../components/btn-clean-word.vue';
 import BtnAddWord from '../components/btn-add-word.vue';
-import ILettersAndQuantities from '../src/interfaces/lettersAndQuantities'
+import ILettersAndQuantities from '../interfaces/lettersAndQuantities'
 
 import { useInitGame } from '../store/initGame';
 import router from '../router';
@@ -12,6 +12,10 @@ import router from '../router';
 const currentRow = ref(1)
 
 const currentWord = ref('')
+
+const currentLettersWritten: Ref<number> = computed(() => {
+	return currentWord.value.length
+})
 
 const lettersAndQuantity: ILettersAndQuantities = {}
 let copyLettersAndQuantity: ILettersAndQuantities = {}
@@ -87,6 +91,18 @@ const validateWord = () => {
 	if (currentWord.value === destinityWord.value) {
 		return true
 	}
+
+	const heartsArea = document.querySelector('.information__container--life')
+
+	// Porque el numero que cuenta las letras ingresadas tambien es un nodo hijo
+	if (heartsArea?.childElementCount === 4) {
+		heartsArea?.children[0].classList.add('animate-pulse')
+		heartsArea?.children[1].classList.add('animate-pulse')
+		heartsArea?.children[2].classList.add('animate-pulse')
+	}
+
+	const lastElement = heartsArea?.lastElementChild
+	if (lastElement) heartsArea?.removeChild(lastElement)
 
 	return false
 }
@@ -164,80 +180,135 @@ const orangeColor = (column: number) => {
 
 <template>
 	<div class="content text-center">
+		<div class="absolute m-10 hover:cursor-pointer z-10" @click="goToHome()">
+			<svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 8 14">
+				<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 1 1.3 6.326a.91.91 0 0 0 0 1.348L7 13"/>
+			</svg>
+		</div>
 		<!-- <h2 class="mb-20 mx-none px-none">
 			!Bienvenido a
 			<span class="type_gradient-one">Word</span>
 			Of The
 			<span class="type_gradient-one">World!</span>
 		</h2> -->
-
-		<div class="absolute m-10 hover:cursor-pointer" @click="goToHome()">
-			<svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 8 14">
-				<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 1 1.3 6.326a.91.91 0 0 0 0 1.348L7 13"/>
-			</svg>
+		<div class="absolute top-20 z-20 w-[100%] flex justify-center items-center gap-24">
+			<div class="information__container--life flex items-center justify-center gap-2">
+				<img class="w-4" src="../assets/heart.png" alt="life" />
+				<img class="w-4" src="../assets/heart.png" alt="life" />
+				<img class="w-4" src="../assets/heart.png" alt="life" />
+				<img class="w-4" src="../assets/heart.png" alt="life" />
+				<img class="w-4" src="../assets/heart.png" alt="life" />
+			</div>
+			<div class="information__container--written-letters flex justify-center items-center">
+				<span class="font-thin text-sm">{{ currentLettersWritten }}</span>
+			</div>
 		</div>
 
-		<TableComponent :quantityLetters="quantityLetters" />
+		<div class="background"></div>
 
-		<InputWord @changedCurrentWord="val => onChangedCurrentWord(val)" @keyup.enter="addNewWord"
-			:currentWord="currentWord" />
+		<div class="form">
+			<TableComponent class="relative z-1" :quantityLetters="quantityLetters" />
 
-		<div>
-			<BtnCleanWord @current-word="cleanCurrentWord"></BtnCleanWord>
+			<InputWord class="relative z-10" @changedCurrentWord="val => onChangedCurrentWord(val)" @keyup.enter="addNewWord"
+				:currentWord="currentWord" />
 
-			<BtnAddWord @add-new-word="addNewWord"></BtnAddWord>
-		</div> 
+			<div class="relative mt-5 z-10">
+				<BtnCleanWord @current-word="cleanCurrentWord"></BtnCleanWord>
+
+				<BtnAddWord @add-new-word="addNewWord"></BtnAddWord>
+			</div> 
+		</div>
+
+		<article class="absolute bottom-11 text-sm text-gray-500 footer">
+			&copy; Todos los derechos reservados. Juan Escobar - 2024
+		</article>
+
 		<router-view></router-view>
 	</div>
 </template>
 
 <style scoped>
-.content {
-	width: 100vw;
-	height: 100vh;
-	background-color: #000;
-	display: grid;
-	place-content: center;
-	color: rgba(255, 255, 255, 0.8quantityLetters);
-}
+	.information__container--life {
+		text-shadow: 5px 5px 5px #ffffff;
+	}
 
-h2 {
-	font-size: 38px;
-	font-weight: 800;
-	letter-spacing: -.05em;
-	position: relative;
-}
+	.footer {
+		left: calc(50% - 175px);
+		text-align: center;
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+		justify-items: center;
+		align-items: center;
+		gap: 10px;
+	}
 
-input {
-	border: 1px solid #ffffff17;
-}
+	.background {
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		background: url('../assets/background.webp');
+		background-size: cover;
+		background-position: center center;
+		background-repeat: no-repeat;
+		aspect-ratio: 16 / 6;
+		opacity: .3;
+		z-index: 9;
+	}
 
-h2::before {
-	content: "";
-	width: 100%;
-	height: .5px;
-	position: absolute;
-	top: -10px;
-	left: 0;
-	background-color: rgba(255, 255, 255, 0.20);
-}
+	.form {
+		padding: 30px 40px 20px 40px;
+		border-radius: 18px;
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		box-shadow: 0 0 27px rgb(255 255 255 / 11%);
+	}
 
-.type_gradient-one {
-	background-image: linear-gradient(90deg, #ff4d4d, #f9cb28);
-	-webkit-background-clip: text;
-	background-clip: text;
-	-webkit-text-fill-color: transparent;
-}
+	.content {
+		width: 100vw;
+		height: 100vh;
+		background-color: #000;
+		display: grid;
+		place-content: center;
+		color: rgba(255, 255, 255, 0.8quantityLetters);
+	}
 
-.type_gradient-one--button {
-	background-image: linear-gradient(90deg, #ff4d4d, #f9cb28);
-}
+	h2 {
+		font-size: 38px;
+		font-weight: 800;
+		letter-spacing: -.05em;
+		position: relative;
+	}
 
-.hovered__path {
-	stroke: white;
-}
+	input {
+		border: 1px solid #ffffff17;
+	}
 
-.noHovered__path {
-	stroke: #b43333;
-}
+	h2::before {
+		content: "";
+		width: 100%;
+		height: .5px;
+		position: absolute;
+		top: -10px;
+		left: 0;
+		background-color: rgba(255, 255, 255, 0.20);
+	}
+
+	.type_gradient-one {
+		background-image: linear-gradient(90deg, #ff4d4d, #f9cb28);
+		-webkit-background-clip: text;
+		background-clip: text;
+		-webkit-text-fill-color: transparent;
+	}
+
+	.type_gradient-one--button {
+		background-image: linear-gradient(90deg, #ff4d4d, #f9cb28);
+	}
+
+	.hovered__path {
+		stroke: white;
+	}
+
+	.noHovered__path {
+		stroke: #b43333;
+	}
 </style>
